@@ -94,6 +94,12 @@ Click the link to open a 3D animation of the pitch trajectory in your browser.
 
 ![3D Trajectory Simulator](https://baseball.skill-vis.com/static/ogp.png)
 
+## Usage Notes
+
+- **For aggregate stats** (averages, trends, comparisons), use `season_summary`. It returns all pitch-type data in a single request.
+- **For trajectory simulation** (`simulate_pitch`), limit to 1-3 pitches per conversation. Each simulation runs a full physics integration on the server and is computationally expensive.
+- **For 3D animation**, click the link included in `simulate_pitch` results to view the trajectory in your browser.
+
 ## API
 
 This MCP server connects to the public API at https://baseball.skill-vis.com. The simulator is based on [Alan Nathan's physics model](https://baseball.physics.illinois.edu/) with extensions for Statcast data integration.
