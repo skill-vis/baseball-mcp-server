@@ -77,7 +77,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="simulate_pitch",
-            description="Run trajectory simulation for a specific Statcast pitch. Returns trajectory, home plate crossing, and comparison with Statcast measured data.",
+            description="Run trajectory simulation for a specific Statcast pitch. Returns trajectory, home plate crossing, and comparison with Statcast measured data. IMPORTANT: This is computationally expensive. Do NOT call this in a loop or for many pitches at once. Limit to 1-3 simulations per conversation. For aggregate stats (averages, trends), use season_summary instead.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -93,7 +93,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="season_summary",
-            description="Get season-wide summary for a pitcher: per pitch-type averages (speed, spin, movement, BSG decomposition, spin efficiency) and optional monthly trends. Use this for questions about a pitcher's overall season stats.",
+            description="Get season-wide summary for a pitcher: per pitch-type averages (speed, spin, movement, BSG decomposition, spin efficiency) and optional monthly trends. Use this for questions about a pitcher's overall season stats. Prefer this over calling get_pitches multiple times for aggregate analysis.",
             inputSchema={
                 "type": "object",
                 "properties": {
