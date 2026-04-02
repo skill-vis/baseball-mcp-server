@@ -108,8 +108,11 @@ async def list_tools() -> list[Tool]:
     ]
 
 
+MCP_HEADERS = {"User-Agent": "baseball-mcp-server/1.0"}
+
+
 async def _api_post(client: httpx.AsyncClient, endpoint: str, data: dict) -> dict:
-    resp = await client.post(f"{BASE_URL}{endpoint}", json=data, timeout=30.0)
+    resp = await client.post(f"{BASE_URL}{endpoint}", json=data, timeout=30.0, headers=MCP_HEADERS)
     resp.raise_for_status()
     return resp.json()
 
