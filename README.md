@@ -9,7 +9,8 @@ Ask Claude Desktop questions like:
 - "Search for Shohei Ohtani and show his 2025 game dates"
 - "Show me all pitches Ohtani threw on July 1, 2025"
 - "Simulate his 5th pitch and compare with Statcast data"
-- "What is Darvish's spin efficiency on his curveball?"
+- "What is Ohtani's spin efficiency on his sweeper for the 2025 season?"
+- "Show me Darvish's monthly speed trends for 2025"
 
 Claude will automatically call the baseball.skill-vis.com API to find answers.
 
@@ -60,8 +61,11 @@ Quit and reopen Claude Desktop. You should see a tool icon in the chat indicatin
 | `get_games` | Get game dates and pitch counts for a pitcher/year |
 | `get_pitches` | Get all pitches from a specific game date |
 | `simulate_pitch` | Run trajectory simulation for a specific pitch |
+| `season_summary` | Season-wide per pitch-type summary (speed, spin, movement, BSG, spin efficiency, monthly trends) |
 
-## Example Conversation
+## Example Conversations
+
+### Simulate a pitch with 3D animation
 
 **You:** "Look up Yoshinobu Yamamoto and simulate one of his fastballs from 2025"
 
@@ -72,6 +76,21 @@ Quit and reopen Claude Desktop. You should see a tool icon in the chat indicatin
 > 3D Animation: https://baseball.skill-vis.com/?mlbam_id=808967&year=2025&date=2025-07-01&pitch=3
 
 Click the link to open a 3D animation of the pitch trajectory in your browser.
+
+### Season analysis
+
+**You:** "What is Ohtani's spin efficiency on each pitch type for the 2025 season?"
+
+**Claude:** *(calls search_pitcher, season_summary with include_bsg=true)*
+
+> Season 2025: 1089 pitches
+>
+> | Type |   n |  mph |  rpm |   eff |      B |      S |     G |
+> |------|-----|------|------|-------|--------|--------|-------|
+> |   FF | 433 | 98.4 | 2493 | 71.6% | +1654  |  -619  |  1520 |
+> |   ST | 229 | 85.2 | 2614 | 48.2% |  +323  | +1191  |  2209 |
+> |   SL | 120 | 88.3 | 2566 |  9.7% |   -26  |  +200  |  2548 |
+> |   CU | 114 | 78.4 | 2676 | 70.0% | -1443  | +1182  |  1852 |
 
 ![3D Trajectory Simulator](https://baseball.skill-vis.com/static/ogp.png)
 

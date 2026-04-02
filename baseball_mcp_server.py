@@ -91,6 +91,20 @@ async def list_tools() -> list[Tool]:
                 "required": ["mlbam_id", "year", "date", "pitch_index"],
             },
         ),
+        Tool(
+            name="season_summary",
+            description="Get season-wide summary for a pitcher: per pitch-type averages (speed, spin, movement, BSG decomposition, spin efficiency) and optional monthly trends. Use this for questions about a pitcher's overall season stats.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mlbam_id": {"type": "integer", "description": "Pitcher's MLBAM ID"},
+                    "year": {"type": "integer", "description": "Season year", "default": 2025},
+                    "include_bsg": {"type": "boolean", "description": "Include BSG decomposition (backspin/sidespin/gyro/spin efficiency)", "default": True},
+                    "include_monthly": {"type": "boolean", "description": "Include monthly trend data", "default": False},
+                },
+                "required": ["mlbam_id", "year"],
+            },
+        ),
     ]
 
 
@@ -214,6 +228,37 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                     pitch_index=arguments["pitch_index"],
                 )
                 return [TextContent(type="text", text=summary)]
+
+            elif name == "season_summary":
+                data = await _api_post(client, "/statcast/season_summary", {
+                    "mlbam_id": arguments["mlbam_id"],
+                    "year": arguments.get("year", 2025),
+                    "include_bsg": arguments.get("include_bsg", True),
+                    "include_monthly": arguments.get("include_monthly", False),
+                })
+                lines = [f"Season {data['year']}: {data['total_pitches']} pitches, BSG={'Yes' if data['bsg_computed'] else 'No'}"]
+                lines.append("")
+                lines.append(f"{'Type':>4} {'n':>4} {'mph':>6} {'rpm':>6} {'axis':>6} {'pfx_x':>6} {'pfx_z':>6}" +
+                             (" {'eff':>5} {'B':>7} {'S':>7} {'G':>6}" if data['bsg_computed'] else ""))
+                for s in data["pitch_type_summaries"]:
+                    line = (f"{s['pitch_type']:>4} {s['count']:4d} "
+                            f"{s['avg_speed_mph'] or 0:6.1f} {s['avg_spin_rate'] or 0:6.0f} "
+                            f"{s['avg_spin_axis'] or 0:6.1f} {s['avg_pfx_x_in'] or 0:+6.1f} {s['avg_pfx_z_in'] or 0:+6.1f}")
+                    if data['bsg_computed'] and s.get('avg_spin_efficiency') is not None:
+                        line += (f" {s['avg_spin_efficiency']*100:5.1f}% "
+                                 f"{s['avg_backspin_rpm'] or 0:+7.0f} {s['avg_sidespin_rpm'] or 0:+7.0f} "
+                                 f"{s['avg_gyrospin_rpm'] or 0:6.0f}")
+                    lines.append(line)
+
+                if data.get("monthly_trends"):
+                    lines.append("")
+                    lines.append("--- Monthly Trends ---")
+                    for t in data["monthly_trends"]:
+                        lines.append(f"  {t['month']} {t['pitch_type']:>3}: n={t['count']:3d} "
+                                     f"{t['avg_speed_mph'] or 0:.1f}mph {t['avg_spin_rate'] or 0:.0f}rpm "
+                                     f"pfx=({t['avg_pfx_x_in'] or 0:+.1f},{t['avg_pfx_z_in'] or 0:+.1f})in")
+
+                return [TextContent(type="text", text="\n".join(lines))]
 
             else:
                 return [TextContent(type="text", text=f"Unknown tool: {name}")]
