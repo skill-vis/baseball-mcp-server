@@ -239,19 +239,19 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                     "include_bsg": arguments.get("include_bsg", True),
                     "include_monthly": arguments.get("include_monthly", False),
                 })
-                lines = [f"Season {data['year']}: {data['total_pitches']} pitches, BSG={'Yes' if data['bsg_computed'] else 'No'}"]
+                lines = [f"Season {data['year']}: {data['total_pitches']} pitches"]
                 lines.append("")
-                lines.append(f"{'Type':>4} {'n':>4} {'mph':>6} {'rpm':>6} {'axis':>6} {'pfx_x':>6} {'pfx_z':>6}" +
-                             (" {'eff':>5} {'B':>7} {'S':>7} {'G':>6}" if data['bsg_computed'] else ""))
                 for s in data["pitch_type_summaries"]:
-                    line = (f"{s['pitch_type']:>4} {s['count']:4d} "
-                            f"{s['avg_speed_mph'] or 0:6.1f} {s['avg_spin_rate'] or 0:6.0f} "
-                            f"{s['avg_spin_axis'] or 0:6.1f} {s['avg_pfx_x_in'] or 0:+6.1f} {s['avg_pfx_z_in'] or 0:+6.1f}")
+                    lines.append(f"--- {s['pitch_type']} ({s['count']} pitches) ---")
+                    lines.append(f"  Speed: {s['avg_speed_mph'] or '?'} mph  EffSpeed: {s.get('avg_effective_speed') or '?'} mph  Arm: {s.get('avg_arm_angle') or '?'}°")
+                    lines.append(f"  Spin: {s['avg_spin_rate'] or '?'} rpm  Axis: {s['avg_spin_axis'] or '?'}°")
+                    lines.append(f"  pfx: ({s['avg_pfx_x_in'] or 0:+.1f}, {s['avg_pfx_z_in'] or 0:+.1f}) in  IVB: {s.get('avg_ivb_in') or '?'} in  HB: {s.get('avg_hb_in') or '?'} in")
+                    lines.append(f"  Whiff: {s.get('whiff_pct') or '?'}%  Chase: {s.get('chase_pct') or '?'}%  Zone: {s.get('zone_pct') or '?'}%  CSW: {s.get('csw_pct') or '?'}%")
+                    if s.get('avg_launch_speed') is not None:
+                        lines.append(f"  ExitVelo: {s['avg_launch_speed']} mph  LA: {s.get('avg_launch_angle') or '?'}°  xwOBA: {s.get('avg_xwoba') or '?'}  wOBA: {s.get('avg_woba') or '?'}")
                     if data['bsg_computed'] and s.get('avg_spin_efficiency') is not None:
-                        line += (f" {s['avg_spin_efficiency']*100:5.1f}% "
-                                 f"{s['avg_backspin_rpm'] or 0:+7.0f} {s['avg_sidespin_rpm'] or 0:+7.0f} "
-                                 f"{s['avg_gyrospin_rpm'] or 0:6.0f}")
-                    lines.append(line)
+                        lines.append(f"  SpinEff: {s['avg_spin_efficiency']*100:.1f}%  B: {s['avg_backspin_rpm'] or 0:+.0f}  S: {s['avg_sidespin_rpm'] or 0:+.0f}  G: {s['avg_gyrospin_rpm'] or 0:.0f}")
+                    lines.append("")
 
                 if data.get("monthly_trends"):
                     lines.append("")
