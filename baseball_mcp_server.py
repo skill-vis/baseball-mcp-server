@@ -204,13 +204,16 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                     return [TextContent(type="text", text="No pitches found.")]
                 lines = [f"Total: {len(data['pitches'])} pitches"]
                 for i, p in enumerate(data["pitches"]):
+                    batter = p.get('batter_name') or f"ID:{p.get('batter_id','?')}"
+                    count = f"{p.get('balls',0)}-{p.get('strikes',0)}"
+                    event = f" → {p['events']}" if p.get('events') else ""
                     lines.append(
                         f"  [{i}] {p.get('pitch_type', '?'):>3} "
                         f"{p.get('release_speed', 0):5.1f}mph "
                         f"spin={p.get('release_spin_rate', 0):.0f}rpm "
-                        f"axis={p.get('spin_axis', 0):.0f}° "
                         f"pfx=({p.get('pfx_x', 0):.2f},{p.get('pfx_z', 0):.2f})ft "
-                        f"| {p.get('description', '')}"
+                        f"({count}) vs {batter}({p.get('stand','?')}) "
+                        f"| {p.get('description', '')}{event}"
                     )
                 return [TextContent(type="text", text="\n".join(lines))]
 
