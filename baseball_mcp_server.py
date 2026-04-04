@@ -316,6 +316,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                         lines.append(f"  3D: {r['sim_url']}")
                     lines.append("")
 
+                # Compare overlay URL
+                compare_parts = []
+                for p in arguments["pitches"]:
+                    compare_parts.append(f"{p['mlbam_id']},{p['year']},{p['date']},{p['pitch_index']}")
+                compare_url = f"{BASE_URL}/?compare={'|'.join(compare_parts)}"
+                lines.append(f"3D Overlay comparison: {compare_url}")
+
                 return [TextContent(type="text", text="\n".join(lines))]
 
             else:
