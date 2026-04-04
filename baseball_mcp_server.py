@@ -105,6 +105,31 @@ async def list_tools() -> list[Tool]:
                 "required": ["mlbam_id", "year"],
             },
         ),
+        Tool(
+            name="compare_pitches",
+            description="Compare multiple pitches side by side (max 6). Returns speed, spin, movement, BSG, home plate position, and simulation error for each pitch. Use this when comparing pitches across different pitchers or pitch types. Each pitch needs mlbam_id, year, date, and pitch_index.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "pitches": {
+                        "type": "array",
+                        "description": "Array of pitches to compare (max 6)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "mlbam_id": {"type": "integer"},
+                                "year": {"type": "integer"},
+                                "date": {"type": "string", "description": "YYYY-MM-DD"},
+                                "pitch_index": {"type": "integer"},
+                                "label": {"type": "string", "description": "Optional label (e.g. 'Ohtani CU')"},
+                            },
+                            "required": ["mlbam_id", "year", "date", "pitch_index"],
+                        },
+                    },
+                },
+                "required": ["pitches"],
+            },
+        ),
     ]
 
 
@@ -263,6 +288,33 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                         lines.append(f"  {t['month']} {t['pitch_type']:>3}: n={t['count']:3d} "
                                      f"{t['avg_speed_mph'] or 0:.1f}mph {t['avg_spin_rate'] or 0:.0f}rpm "
                                      f"pfx=({t['avg_pfx_x_in'] or 0:+.1f},{t['avg_pfx_z_in'] or 0:+.1f})in")
+
+                return [TextContent(type="text", text="\n".join(lines))]
+
+            elif name == "compare_pitches":
+                data = await _api_post(client, "/statcast/compare", {
+                    "pitches": arguments["pitches"],
+                })
+                if data["count"] == 0:
+                    return [TextContent(type="text", text="No valid pitches found.")]
+
+                lines = [f"Comparison: {data['count']} pitches\n"]
+                for r in data["results"]:
+                    lines.append(f"--- {r.get('label', '?')} ---")
+                    lines.append(f"  {r.get('pitcher_name','?')} | {r.get('pitch_type','?')} | "
+                                 f"{r.get('release_speed_mph','?')} mph | {r.get('release_spin_rate','?')} rpm")
+                    lines.append(f"  pfx: ({r.get('pfx_x_in','?'):+.1f}, {r.get('pfx_z_in','?'):+.1f}) in | "
+                                 f"axis: {r.get('spin_axis','?')}° | eff: {r['spin_efficiency']*100:.1f}%" if r.get('spin_efficiency') else
+                                 f"  pfx: ({r.get('pfx_x_in','?')}, {r.get('pfx_z_in','?')}) in")
+                    if r.get('home_plate_sim'):
+                        hp = r['home_plate_sim']
+                        lines.append(f"  Sim HP: x={hp['x']:.4f}m, z={hp['z']:.4f}m")
+                    if r.get('home_plate_statcast'):
+                        sc = r['home_plate_statcast']
+                        lines.append(f"  Actual: x={sc['x']:.4f}m, z={sc['z']:.4f}m | Error: {r.get('error_mm','?')}mm")
+                    if r.get('sim_url'):
+                        lines.append(f"  3D: {r['sim_url']}")
+                    lines.append("")
 
                 return [TextContent(type="text", text="\n".join(lines))]
 
